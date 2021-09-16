@@ -1,110 +1,69 @@
 # Notification Library
 
-# New test feature?
+## Description
+This library is meant for create and manage notifications through a **JSON server**. Is possible to add channels (that exists in the server) and push notification, get the notifications from remote and read them. 
 
-# Env Config
+## Usage example
 
-
-# TSDX User Guide
-
-Congrats! You just saved yourself hours of work by bootstrapping this project with TSDX. Let’s get you oriented with what’s here and how to use it.
-
-> This TSDX setup is meant for developing libraries (not apps!) that can be published to NPM. If you’re looking to build a Node app, you could use `ts-node-dev`, plain `ts-node`, or simple `tsc`.
-
-> If you’re new to TypeScript, checkout [this handy cheatsheet](https://devhints.io/typescript)
-
-## Commands
-
-TSDX scaffolds your new library inside `/src`.
-
-To run TSDX, use:
-
-```bash
-npm start # or yarn start
+### Add a channel
+```typescript
+addChannel(channelName: string, newUrl: string): void
 ```
 
-This builds to `/dist` and runs the project in watch mode so any edits you save inside `src` causes a rebuild to `/dist`.
-
-To do a one-off build, use `npm run build` or `yarn build`.
-
-To run tests, use `npm test` or `yarn test`.
-
-## Configuration
-
-Code quality is set up for you with `prettier`, `husky`, and `lint-staged`. Adjust the respective fields in `package.json` accordingly.
-
-### Jest
-
-Jest tests are set up to run with `npm test` or `yarn test`.
-
-### Bundle Analysis
-
-[`size-limit`](https://github.com/ai/size-limit) is set up to calculate the real cost of your library with `npm run size` and visualize the bundle with `npm run analyze`.
-
-#### Setup Files
-
-This is the folder structure we set up for you:
-
-```txt
-/src
-  index.tsx       # EDIT THIS
-/test
-  blah.test.tsx   # EDIT THIS
-.gitignore
-package.json
-README.md         # EDIT THIS
-tsconfig.json
+### Set the name of the sender
+```typescript
+setSender(name: string, flag?: string): void
 ```
 
-### Rollup
-
-TSDX uses [Rollup](https://rollupjs.org) as a bundler and generates multiple rollup configs for various module formats and build settings. See [Optimizations](#optimizations) for details.
-
-### TypeScript
-
-`tsconfig.json` is set up to interpret `dom` and `esnext` types, as well as `react` for `jsx`. Adjust according to your needs.
-
-## Continuous Integration
-
-### GitHub Actions
-
-Two actions are added by default:
-
-- `main` which installs deps w/ cache, lints, tests, and builds on all pushes against a Node and OS matrix
-- `size` which comments cost comparison of your library on every pull request using [`size-limit`](https://github.com/ai/size-limit)
-
-## Optimizations
-
-Please see the main `tsdx` [optimizations docs](https://github.com/palmerhq/tsdx#optimizations). In particular, know that you can take advantage of development-only optimizations:
-
-```js
-// ./types/index.d.ts
-declare var __DEV__: boolean;
-
-// inside your code...
-if (__DEV__) {
-  console.log('foo');
-}
+### Subscribe in a channel
+```typescript
+subscribe(channelName: string, ...callbacks: SubscriberCallback[]): void
 ```
 
-You can also choose to install and use [invariant](https://github.com/palmerhq/tsdx#invariant) and [warning](https://github.com/palmerhq/tsdx#warning) functions.
+This method is meant for subscribe in a channel: add a list of callback function, called evrytime you get new notifications.
 
-## Module Formats
+The `onNewNotification()` function is wrote just for give an example: it simply log all properties of all new notifications obtained.
 
-CJS, ESModules, and UMD module formats are supported.
+### Unsubscribe
+```typescript
+unSubscribe(channelName: string): void
+```
 
-The appropriate paths are configured in `package.json` and `dist/index.js` accordingly. Please report if any issues are found.
+### Get the notification
 
-## Named Exports
+For better functionality, the get method has been split into **two differents**: 
 
-Per Palmer Group guidelines, [always use named exports.](https://github.com/palmerhq/typescript#exports) Code split inside your React app instead of your React library.
+```typescript
+async getAll(channelName: string): Promise<Notification[] | void>
+```
+This method get all notification from the channel, but before do the remote call, it **check if there already are notifications in the local list.**
+So, if the local list of notifications isn't empty, it calls the server and return the list of notifications obtained, otherwise it just return the local list of notifications.*
 
-## Including Styles
+```typescript
+async getNew(channelName: string): Promise<Notification[] | void>
+```
+This one, instead, calls the server **without check** if there are some notifications in local. 
+The return value depends: if there are new notifications, return them and call the subscribers (if some callback are subscribed in that channel), otherwise return undefined.
 
-There are many ways to ship styles, including with CSS-in-JS. TSDX has no opinion on this, configure how you like.
+So, the main difference between the two methods is the return value: the first one always* return all notifications, the second one just* the new notifications or undefined.
 
-For vanilla CSS, you can include it at the root directory and add it to the `files` section in your `package.json`, so that it can be imported separately by your users and run through their bundler's loader.
+### Push
+```typescript
+async push(channelName: string, ...newNotifications: Notification[]): Promise<Notification[] | void>
+```
+The push method send notifications to the server (and push them in local). You can call the method once for send several notifications. 
+The return value is a list of the notifications that you have send.*
 
-## Publishing to NPM
+### Read
+```typescript
+async read(idNotifica: string, channelName: string): Promise<Notification | void>
+```
+The read method add a date timestamp to the notification you want (in both local and remore). It return the readed notification.*
 
-We recommend using [np](https://github.com/sindresorhus/np).
+### Notify one
+```typescript
+notifyOneByIdAndChannelName(idNotifica: string, channelName: string): void | Notification
+```
+This method simply return a notification ad log all the properties.* It look for that one just in local.
+
+*: *as long as the process is successfully* 
